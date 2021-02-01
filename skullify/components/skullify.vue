@@ -6,6 +6,8 @@
 
 <script>
 import * as lottie from "lottie-web";
+import { readDir, readFile } from "arcanophile";
+import spy from "cep-spy";
 
 export default {
   name: "skullify",
@@ -39,6 +41,20 @@ export default {
         };
       },
     },
+    folder: {
+      type: String,
+      default: "",
+    },
+    files: {
+      type: Array,
+      default: () => {
+        return [];
+      },
+    },
+    uniqueRollLength: {
+      type: Number,
+      default: 1,
+    },
     speed: {
       type: Number,
       default: 1,
@@ -64,6 +80,7 @@ export default {
       autoplay: false,
       animType: "svg",
     },
+    previousRolls: [],
   }),
   async mounted() {
     await this.init();
@@ -149,9 +166,17 @@ export default {
         )
       );
     },
+    randomNum(min, max) {
+      return Math.floor(Math.random() * max) + min;
+    },
+    shuffleFile() {},
+    shuffleSegment() {},
+    rollRandom(max, excludes = []) {
+      let roll = this.randomNum(0, max);
+      return excludes.includes(roll) ? rollRandom(max, excludes) : roll;
+    },
     playSegmentChunk(value) {
       let target = this.segments[value][this.realDirection];
-      console.log(target);
       this.animData.playSegments(
         this.segments[value][this.realDirection],
         true
