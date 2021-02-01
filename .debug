@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionList>
+    <Extension Id="com.lottie-switch.panel">
+        <HostList>
+            <Host Name="ILST" Port="4440" />
+            <Host Name="AEFT" Port="4441" />
+            <Host Name="PHXS" Port="4442" />
+            <Host Name="PPRO" Port="4443" />
+            <Host Name="IDSN" Port="4444" />
+            <Host Name="AUDT" Port="4445" />
+            <Host Name="FLPR" Port="4446" />
+        </HostList>
+    </Extension>
+</ExtensionList>
