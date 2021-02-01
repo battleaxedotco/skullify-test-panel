@@ -14,6 +14,8 @@
       <div class="lottie-wrapper">
         <Anno>{{ currentTitle }}</Anno>
         <skullify
+          debug
+          folder="./src/assets/wrenches"
           :animationData="currentAnimationData"
           :options="{
             loop: true,
@@ -21,25 +23,26 @@
         />
       </div>
       <Divider alt />
-      <Wrapper>
-        <Button label="Roll segment index" @click="shuffleSegment" />
-        <Input-Scroll
-          label="Segment index"
-          v-model="activeSegmentIndex"
-          :min="0"
-          :max="3"
-        />
-      </Wrapper>
-      <div class="lottie-wrapper">
-        <Anno>{{ currentTitle }}</Anno>
-        <skullify
-          ref="ball"
-          debug
-          :animationData="ballAnimation"
-          :options="{
-            loop: true,
-          }"
-        />
+      <div v-if="false">
+        <Wrapper>
+          <Button label="Roll segment index" @click="shuffleSegment" />
+          <Input-Scroll
+            label="Segment index"
+            v-model="activeSegmentIndex"
+            :min="0"
+            :max="3"
+          />
+        </Wrapper>
+        <div class="lottie-wrapper">
+          <Anno>{{ currentTitle }}</Anno>
+          <skullify
+            ref="ball"
+            :animationData="ballAnimation"
+            :options="{
+              loop: true,
+            }"
+          />
+        </div>
       </div>
     </Panel>
   </div>

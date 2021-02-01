@@ -6,8 +6,11 @@
 
 <script>
 import * as lottie from "lottie-web";
-import { readDir, readFile } from "arcanophile";
 import spy from "cep-spy";
+
+const isAdobe = window.__adobe_cep__ ? true : false;
+const isNode =
+  typeof process !== "undefined" && process.release.name === "node";
 
 export default {
   name: "skullify",
@@ -80,9 +83,15 @@ export default {
       autoplay: false,
       animType: "svg",
     },
+    activeFileIndex: 0,
+    activeSegmentIndex: 0,
     previousRolls: [],
   }),
+  mixins: [require("../utils/IO").default],
   async mounted() {
+    console.log(this.realFolderLocation);
+    // console.log(this.readFiles);
+    if (this.folder) this.getFileListFromFolder();
     await this.init();
   },
   watch: {
@@ -136,8 +145,35 @@ export default {
     realDirection() {
       return this.direction ? "forward" : "backward";
     },
+    realFolderLocation() {
+      if (!this.folder || !this.folder.length) return null;
+      let temp = "";
+      if (isAdobe) {
+        if (/^\.\//.test(this.folder)) {
+          console.log("HAS RELATIVE PATH");
+          return `${spy.path.root}/${this.folder.replace(/^\.\//, "")}`.replace(
+            /\\/gm,
+            "/"
+          );
+        } else {
+          return path.resolve(this.folder);
+        }
+      } else return path.resolve(this.folder);
+    },
   },
   methods: {
+    async getFileListFromFolder() {
+      if (
+        this.folder &&
+        this.folder.length &&
+        this.realFolderLocation &&
+        this.realFolderLocation.length
+      ) {
+        return await this.readFiles(this.realFolderLocation);
+      } else if (this.files && this.files.length) {
+        //
+      } else return []; // This must be browser, we can't read files here
+    },
     async reconstruct(val) {
       this.animData.destroy(this.name);
       if (val) await this.init();
