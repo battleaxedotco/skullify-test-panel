@@ -83,19 +83,29 @@ export default {
     previousSegmentRolls: [],
     loaded: false,
     mounted: false,
+    evts: [
+      "complete",
+      "loopComplete",
+      "enterFrame",
+      "segmentStart",
+      "config_ready",
+      "data_ready",
+      "data_failed",
+      "loaded_images",
+      "DOMLoaded",
+      "destroy",
+    ],
   }),
   mixins: [require("../utils/IO").default, require("../utils/lottie").default],
   async mounted() {
-    if (this.debug) console.log(this.realFolderLocation);
-    // if (this.debug) console.log(this.readFiles);
     if (this.folder) {
       if (this.debug) console.log("FOLDER:");
       this.realFiles = await this.getFileListFromFolder();
     } else if (this.files && this.files.length) {
       if (this.debug) console.log("FILES:");
       this.realFiles = await this.parseFileList();
-      if (this.debug) console.log("DONE PARSING");
     }
+    if (this.debug) console.log("MOUNT 1");
     await this.init();
   },
   watch: {
@@ -162,6 +172,30 @@ export default {
     },
   },
   methods: {
+    convertToSnakeCase(str) {
+      return str !== "DOMLoaded"
+        ? (
+            str[0].toLowerCase() +
+            str
+              .slice(1, str.length)
+              .replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+          ).replace("_", "-")
+        : "dom-loaded";
+    },
+    sendEvent() {
+      if (!arguments.length || !arguments[0]) return null;
+      this.$emit(this.convertToSnakeCase(arguments[0].type), arguments[0]);
+    },
+    generateEvents() {
+      this.evts.forEach((evt) => {
+        this.animData.addEventListener(evt, this.sendEvent);
+      });
+    },
+    removeEvents() {
+      this.evts.forEach((evt) => {
+        this.animData.removeEventListener(evt, this.sendEvent);
+      });
+    },
     async parseFileList() {
       let temp = [];
       for (let file of this.files.filter((file) => {
@@ -212,6 +246,7 @@ export default {
       } else return []; // This must be browser, we can't read files here
     },
     async reconstruct(val) {
+      this.removeEvents();
       this.animData.destroy();
       this.loaded = false;
       if (val) await this.init();
@@ -235,6 +270,7 @@ export default {
           this.animData.play();
         if (this.debug) console.log(this.animData);
         this.loaded = true;
+        this.generateEvents();
         return Promise.resolve(true);
       } catch (err) {
         return Promise.reject(err);

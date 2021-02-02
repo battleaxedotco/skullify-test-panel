@@ -8,10 +8,13 @@
           <div class="anim-wrapper">
             <Anno>Folder prop:</Anno>
             <skullify
+              debug
               ref="shuffle1"
               folder="./src/assets/wrenches"
+              @loop-complete="logLoop"
               :options="{
                 autoplay: true,
+                loop: true,
               }"
             />
             <Button block label="Roll index" @click="shuffle(1)" />
@@ -101,6 +104,10 @@ export default {
         this.activeIndex,
       ]);
       console.log(this.activeIndex);
+    },
+    logLoop(msg) {
+      console.log("LOOP");
+      console.log(msg);
     },
     randomNum(min, max) {
       return Math.floor(Math.random() * max) + min;
