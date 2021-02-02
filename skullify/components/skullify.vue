@@ -70,14 +70,7 @@ export default {
   },
   data: () => ({
     elt: null,
-    doneLoading: false,
     animData: null,
-    autoplay: true,
-    override: false,
-    lottieElt: null,
-    activeItem: null,
-    isDragging: false,
-    loop: true,
     opts: {
       loop: false,
       prerender: true,
@@ -90,18 +83,19 @@ export default {
     previousFileRolls: [],
     previousSegmentRolls: [],
     loaded: false,
+    mounted: false,
   }),
   mixins: [require("../utils/IO").default],
   async mounted() {
-    console.log(this.realFolderLocation);
-    // console.log(this.readFiles);
+    if (this.debug) console.log(this.realFolderLocation);
+    // if (this.debug) console.log(this.readFiles);
     if (this.folder) {
-      console.log("FOLDER:");
+      if (this.debug) console.log("FOLDER:");
       this.realFiles = await this.getFileListFromFolder();
     } else if (this.files && this.files.length) {
-      console.log("FILES:");
+      if (this.debug) console.log("FILES:");
       this.realFiles = await this.parseFileList();
-      console.log("DONE PARSING");
+      if (this.debug) console.log("DONE PARSING");
     }
     await this.init();
   },
@@ -127,8 +121,8 @@ export default {
       if (val !== last) this.setDirection(val);
     },
     realFiles(val) {
-      console.log("FILE LIST CHANGED:");
-      console.log(val);
+      if (this.debug) console.log("FILE LIST CHANGED:");
+      if (this.debug) console.log(val);
     },
   },
   computed: {
@@ -165,12 +159,11 @@ export default {
     },
     realFolderLocation() {
       if (!this.folder || !this.folder.length) return null;
-      console.log(this.folder);
-      console.log("HELLO?");
+      if (this.debug) console.log(this.folder);
       return this.sanitizeLocalPath(this.folder);
       // if (isAdobe) {
       //   if (/^\.\//.test(this.folder)) {
-      //     console.log("HAS RELATIVE PATH");
+      //     if (this.debug) console.log("HAS RELATIVE PATH");
       //   } else {
       //     return path.resolve(this.folder);
       //   }
@@ -179,21 +172,32 @@ export default {
   },
   methods: {
     async parseFileList() {
+      if (this.debug) {
+        console.log("PARSING LIST:");
+      }
       let temp = [];
       for (let file of this.files.filter((file) => {
-        return /(json|lottie)$/.test(file);
+        return /string/i.test(typeof file) ? /(json|lottie)$/.test(file) : true;
       }))
-        if (/string/i.test(typeof file))
+        if (/string/i.test(typeof file)) {
           temp.push(
             JSON.parse(await this.readFile(this.sanitizeLocalPath(file), false))
           );
-        else if (/object/i.test(typeof file)) temp.push(file);
+        } else if (/object/i.test(typeof file)) {
+          temp.push(file);
+        } else {
+          this.$emit("error", `${typeof file} is not supported`);
+        }
+      // if (this.debug) console.log("TEMP FILES:", temp);
       return temp.filter((item) => {
-        return (
-          Object.keys(item).length &&
-          ["v", "fr", "ip"].some((el) => Object.keys(item).includes(el))
-        );
+        return this.checkIfValidLottie(item);
       });
+    },
+    checkIfValidLottie(item) {
+      return (
+        Object.keys(item).length &&
+        ["v", "fr", "ip"].some((el) => Object.keys(item).includes(el))
+      );
     },
     sanitizeLocalPath(targ) {
       return /^\.\//.test(targ) && isAdobe
@@ -201,15 +205,26 @@ export default {
         : path.resolve(targ);
     },
     async getFileListFromFolder() {
+      if (this.debug) console.log("READING FROM FOLDER");
       if (
         this.folder &&
         this.folder.length &&
         this.realFolderLocation &&
         this.realFolderLocation.length
       ) {
-        return await this.readFiles(this.realFolderLocation);
+        let temp = await this.readFiles(this.realFolderLocation, false);
+        return temp
+          .filter((item) => {
+            return /string/i.test(typeof item);
+          })
+          .map((item) => {
+            return JSON.parse(item);
+          })
+          .filter((item) => {
+            return this.checkIfValidLottie(item);
+          });
       } else if (this.files && this.files.length) {
-        //
+        // This should have been handled via "files" prop
       } else return []; // This must be browser, we can't read files here
     },
     async reconstruct(val) {
@@ -218,13 +233,15 @@ export default {
       if (val) await this.init();
     },
     async init() {
-      console.log("INITIALIZING", this.animationData, this.animData);
+      if (this.debug)
+        console.log("INITIALIZING", this.animationData, this.animData);
       try {
         let temp = this.animationData
           ? this.animationData
           : this.realFiles.length
           ? this.realFiles[this.activeFileIndex]
           : null;
+
         if (!temp) {
           this.$emit("error", "Animation data was empty");
           return null;
@@ -275,7 +292,7 @@ export default {
         true
       );
       this.play();
-      console.log(value);
+      if (this.debug) console.log(value);
     },
     play() {
       this.animData.play();
