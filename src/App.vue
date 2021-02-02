@@ -117,7 +117,7 @@
 </template>
 
 <script>
-import { skullify } from "../skullify";
+import { skullify } from "skullify";
 
 export default {
   data: () => ({
