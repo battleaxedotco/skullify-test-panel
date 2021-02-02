@@ -13,10 +13,23 @@
       </Wrapper>
       <div class="lottie-wrapper">
         <Anno>{{ currentTitle }}</Anno>
-        <skullify
+        <!-- <skullify
           debug
           folder="./src/assets/wrenches"
           :animationData="currentAnimationData"
+          :options="{
+            loop: true,
+          }"
+        /> -->
+        <skullify
+          debug
+          :files="[
+            './src/assets/wrenches/white.json',
+            './src/assets/wrenches/blue.json',
+            './src/assets/wrenches/green.json',
+            './src/assets/wrenches/yellow.json',
+          ]"
+          ref="filelist"
           :options="{
             loop: true,
           }"

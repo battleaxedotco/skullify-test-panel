@@ -7,6 +7,7 @@
 <script>
 import * as lottie from "lottie-web";
 import spy from "cep-spy";
+import path from "path";
 
 const isAdobe = window.__adobe_cep__ ? true : false;
 const isNode =
@@ -83,6 +84,7 @@ export default {
       autoplay: false,
       animType: "svg",
     },
+    realFiles: [],
     activeFileIndex: 0,
     activeSegmentIndex: 0,
     previousRolls: [],
@@ -91,7 +93,13 @@ export default {
   async mounted() {
     console.log(this.realFolderLocation);
     // console.log(this.readFiles);
-    if (this.folder) this.getFileListFromFolder();
+    if (this.folder) {
+      console.log("FOLDER:");
+      this.realFiles = await this.getFileListFromFolder();
+    } else if (this.files && this.files.length) {
+      console.log("FILES:");
+      this.realFiles = await this.parseFileList();
+    }
     await this.init();
   },
   watch: {
@@ -111,6 +119,10 @@ export default {
     },
     direction(val, last) {
       if (val !== last) this.setDirection(val);
+    },
+    realFiles(val) {
+      console.log("FILE LIST CHANGED:");
+      console.log(val);
     },
   },
   computed: {
@@ -147,21 +159,41 @@ export default {
     },
     realFolderLocation() {
       if (!this.folder || !this.folder.length) return null;
-      let temp = "";
-      if (isAdobe) {
-        if (/^\.\//.test(this.folder)) {
-          console.log("HAS RELATIVE PATH");
-          return `${spy.path.root}/${this.folder.replace(/^\.\//, "")}`.replace(
-            /\\/gm,
-            "/"
-          );
-        } else {
-          return path.resolve(this.folder);
-        }
-      } else return path.resolve(this.folder);
+      console.log(this.folder);
+      console.log("HELLO?");
+      return this.sanitizeLocalPath(this.folder);
+      // if (isAdobe) {
+      //   if (/^\.\//.test(this.folder)) {
+      //     console.log("HAS RELATIVE PATH");
+      //   } else {
+      //     return path.resolve(this.folder);
+      //   }
+      // } else return path.resolve(this.folder);
     },
   },
   methods: {
+    async parseFileList() {
+      let temp = [];
+      for (let file of this.files.filter((file) => {
+        return /(json|lottie)$/.test(file);
+      }))
+        if (/string/i.test(typeof file))
+          temp.push(
+            JSON.parse(await this.readFile(this.sanitizeLocalPath(file), false))
+          );
+        else if (/object/i.test(typeof file)) temp.push(file);
+      return temp.filter((item) => {
+        return (
+          Object.keys(item).length &&
+          ["v", "fr", "ip"].some((el) => Object.keys(item).includes(el))
+        );
+      });
+    },
+    sanitizeLocalPath(targ) {
+      return /^\.\//.test(targ) && isAdobe
+        ? `${spy.path.root}/${targ.replace(/^\.\//, "")}`.replace(/\\/gm, "/")
+        : path.resolve(targ);
+    },
     async getFileListFromFolder() {
       if (
         this.folder &&
@@ -175,12 +207,24 @@ export default {
       } else return []; // This must be browser, we can't read files here
     },
     async reconstruct(val) {
-      this.animData.destroy(this.name);
+      this.animData.destroy();
       if (val) await this.init();
     },
     async init() {
       try {
-        this.animData = this.buildAnimation(this.animationData);
+        this.animData = this.animationData
+          ? this.buildAnimation(this.animationData)
+          : this.realFiles.length
+          ? this.realFiles[this.activeFileIndex]
+          : null;
+        if (!this.animData) {
+          console.log("ANIMATION DATA EMPTY");
+          console.log(this.animData);
+          console.log(this.realFiles);
+          console.log(this.activeFileIndex);
+          this.$emit("error", "Animation data was empty");
+          return null;
+        }
         this.$emit("load");
         if (this.opts.autoplay) this.animData.play();
         if (this.debug) console.log(this.animData);
