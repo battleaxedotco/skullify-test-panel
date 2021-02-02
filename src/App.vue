@@ -11,7 +11,7 @@
               ref="shuffle1"
               folder="./src/assets/wrenches"
               :options="{
-                loop: true,
+                autoplay: true,
               }"
             />
             <Button block label="Roll index" @click="shuffle(1)" />

@@ -69,7 +69,6 @@ export default {
     },
   },
   data: () => ({
-    elt: null,
     animData: null,
     opts: {
       loop: false,
@@ -85,7 +84,7 @@ export default {
     loaded: false,
     mounted: false,
   }),
-  mixins: [require("../utils/IO").default],
+  mixins: [require("../utils/IO").default, require("../utils/lottie").default],
   async mounted() {
     if (this.debug) console.log(this.realFolderLocation);
     // if (this.debug) console.log(this.readFiles);
@@ -159,36 +158,21 @@ export default {
     },
     realFolderLocation() {
       if (!this.folder || !this.folder.length) return null;
-      if (this.debug) console.log(this.folder);
       return this.sanitizeLocalPath(this.folder);
-      // if (isAdobe) {
-      //   if (/^\.\//.test(this.folder)) {
-      //     if (this.debug) console.log("HAS RELATIVE PATH");
-      //   } else {
-      //     return path.resolve(this.folder);
-      //   }
-      // } else return path.resolve(this.folder);
     },
   },
   methods: {
     async parseFileList() {
-      if (this.debug) {
-        console.log("PARSING LIST:");
-      }
       let temp = [];
       for (let file of this.files.filter((file) => {
         return /string/i.test(typeof file) ? /(json|lottie)$/.test(file) : true;
       }))
-        if (/string/i.test(typeof file)) {
+        if (/string/i.test(typeof file))
           temp.push(
             JSON.parse(await this.readFile(this.sanitizeLocalPath(file), false))
           );
-        } else if (/object/i.test(typeof file)) {
-          temp.push(file);
-        } else {
-          this.$emit("error", `${typeof file} is not supported`);
-        }
-      // if (this.debug) console.log("TEMP FILES:", temp);
+        else if (/object/i.test(typeof file)) temp.push(file);
+        else this.$emit("error", `${typeof file} is not supported`);
       return temp.filter((item) => {
         return this.checkIfValidLottie(item);
       });
@@ -286,43 +270,11 @@ export default {
       return excludes.includes(roll) ? this.rollRandom(max, excludes) : roll;
     },
     playSegmentChunk(value) {
-      let target = this.segments[value][this.realDirection];
       this.animData.playSegments(
         this.segments[value][this.realDirection],
         true
       );
       this.play();
-      if (this.debug) console.log(value);
-    },
-    play() {
-      this.animData.play();
-    },
-    stop() {
-      this.animData.stop();
-    },
-    goToAndStop(value, isFrame) {
-      this.animData.goToAndStop(value, isFrame, this.name);
-    },
-    setSpeed(speed) {
-      this.animData.setSpeed(speed, this.name);
-    },
-    setDirection(direction) {
-      this.animData.setDirection(direction, this.name);
-    },
-    freeze() {
-      this.animData.freeze();
-    },
-    unfreeze() {
-      this.animData.unfreeze();
-    },
-    inBrowser() {
-      return this.animData.inBrowser();
-    },
-    resize() {
-      this.animData.resize();
-    },
-    setQuality(quality) {
-      this.animData.setQuality(quality);
     },
   },
 };
