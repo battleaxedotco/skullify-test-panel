@@ -1,5 +1,12 @@
 <template>
   <div class="skullify-container">
+    <slot v-if="$slots.default" />
+    <div
+      v-else
+      v-show="!mounted"
+      :style="buildSkeleton()"
+      class="skullify-skeleton"
+    />
     <div class="skullify-animation" />
   </div>
 </template>
@@ -9,7 +16,10 @@ import * as lottie from "lottie-web";
 import spy from "cep-spy";
 import path from "path";
 
+// Adobe is #1 concern
 const isAdobe = window.__adobe_cep__ ? true : false;
+
+// Node should be handled for filepaths via fs whenever not in Adobe
 const isNode =
   typeof process !== "undefined" && process.release.name === "node";
 
@@ -67,6 +77,12 @@ export default {
       type: Number,
       default: 1,
     },
+    skeleton: {
+      type: Array,
+      default: () => {
+        return [960, 960];
+      },
+    },
   },
   data: () => ({
     animData: null,
@@ -105,7 +121,6 @@ export default {
       if (this.debug) console.log("FILES:");
       this.realFiles = await this.parseFileList();
     }
-    if (this.debug) console.log("MOUNT 1");
     await this.init();
   },
   watch: {
@@ -182,6 +197,33 @@ export default {
           ).replace("_", "-")
         : "dom-loaded";
     },
+    getGCR(a, b) {
+      return b == 0 ? a : this.getGCR(b, a % b);
+    },
+    getAspectRatio(a, b) {
+      let r = this.getGCR(a, b);
+      return `${a / r}:${b / r}`;
+    },
+    getRatio(str) {
+      console.log(str);
+      let string = str.split(":");
+      if (!string.length) return null;
+      return +string[0] / +string[1];
+    },
+    buildSkeleton() {
+      // if (this.mounted) {
+      console.log("SKELETON");
+      let ratio = this.getAspectRatio(960, 540);
+      let pratio = this.getRatio(ratio);
+      return `
+          overflow: hidden;
+          height: 0;
+          padding-top: ${(this.skeleton[0] / this.skeleton[1]) * 100}%;
+          width: 100%;
+          background: var(--color-bg);
+        `;
+      // }
+    },
     sendEvent() {
       if (!arguments.length || !arguments[0]) return null;
       this.$emit(this.convertToSnakeCase(arguments[0].type), arguments[0]);
@@ -252,8 +294,9 @@ export default {
       if (val) await this.init();
     },
     async init() {
-      if (this.debug)
+      if (this.debug) {
         console.log("INITIALIZING", this.animationData, this.animData);
+      }
       try {
         let temp = this.animationData
           ? this.animationData
@@ -265,6 +308,7 @@ export default {
           this.$emit("error", "Animation data was empty");
           return null;
         } else this.animData = this.buildAnimation(temp);
+        this.mounted = true;
 
         if (this.opts.autoplay && this.animData && this.animData.play)
           this.animData.play();
@@ -282,7 +326,7 @@ export default {
         Object.assign(
           {
             animationData: anim,
-            wrapper: this.$el.children[0],
+            wrapper: this.$el.children[1],
             name: this.name,
           },
           Object.assign(this.opts, this.options)
