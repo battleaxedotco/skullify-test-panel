@@ -90,7 +90,8 @@
               :options="{
                 autoplay: true,
               }"
-              @loaded="logEvent"
+              @load="logEvent"
+              @unload="logEvent"
               @error="logEvent"
               @loop-complete="logEvent"
               @enter-frame="logEvent"
