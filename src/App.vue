@@ -13,14 +13,14 @@
       </Wrapper>
       <div class="lottie-wrapper">
         <Anno>{{ currentTitle }}</Anno>
-        <!-- <skullify
+        <skullify
           debug
           folder="./src/assets/wrenches"
           :animationData="currentAnimationData"
           :options="{
             loop: true,
           }"
-        /> -->
+        />
         <skullify
           debug
           :files="[
@@ -30,11 +30,13 @@
             './src/assets/wrenches/yellow.json',
           ]"
           ref="filelist"
+          :uniqueRollLength="2"
           :options="{
-            loop: true,
+            autoplay: true,
           }"
         />
       </div>
+      <Button label="Shuffle file" @click="shuffleTest" />
       <Divider alt />
       <div v-if="false">
         <Wrapper>
@@ -119,6 +121,9 @@ export default {
     shuffleSegment() {
       this.activeSegmentIndex = this.getRandomIndex(4);
       this.$refs.ball.playSegmentChunk(this.activeSegmentIndex);
+    },
+    shuffleTest() {
+      this.$refs.filelist.shuffleFile();
     },
   },
 };

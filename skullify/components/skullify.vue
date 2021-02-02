@@ -87,7 +87,9 @@ export default {
     realFiles: [],
     activeFileIndex: 0,
     activeSegmentIndex: 0,
-    previousRolls: [],
+    previousFileRolls: [],
+    previousSegmentRolls: [],
+    loaded: false,
   }),
   mixins: [require("../utils/IO").default],
   async mounted() {
@@ -99,10 +101,14 @@ export default {
     } else if (this.files && this.files.length) {
       console.log("FILES:");
       this.realFiles = await this.parseFileList();
+      console.log("DONE PARSING");
     }
     await this.init();
   },
   watch: {
+    loaded(val) {
+      this.$emit(`${val ? "" : "un"}load`);
+    },
     async animationData(val, last) {
       if (JSON.stringify(val) !== JSON.stringify(last))
         await this.reconstruct(val);
@@ -208,26 +214,26 @@ export default {
     },
     async reconstruct(val) {
       this.animData.destroy();
+      this.loaded = false;
       if (val) await this.init();
     },
     async init() {
+      console.log("INITIALIZING", this.animationData, this.animData);
       try {
-        this.animData = this.animationData
-          ? this.buildAnimation(this.animationData)
+        let temp = this.animationData
+          ? this.animationData
           : this.realFiles.length
           ? this.realFiles[this.activeFileIndex]
           : null;
-        if (!this.animData) {
-          console.log("ANIMATION DATA EMPTY");
-          console.log(this.animData);
-          console.log(this.realFiles);
-          console.log(this.activeFileIndex);
+        if (!temp) {
           this.$emit("error", "Animation data was empty");
           return null;
-        }
-        this.$emit("load");
-        if (this.opts.autoplay) this.animData.play();
+        } else this.animData = this.buildAnimation(temp);
+
+        if (this.opts.autoplay && this.animData && this.animData.play)
+          this.animData.play();
         if (this.debug) console.log(this.animData);
+        this.loaded = true;
         return Promise.resolve(true);
       } catch (err) {
         return Promise.reject(err);
@@ -249,11 +255,18 @@ export default {
     randomNum(min, max) {
       return Math.floor(Math.random() * max) + min;
     },
-    shuffleFile() {},
+    shuffleFile() {
+      while (this.previousFileRolls.length > this.uniqueRollLength)
+        this.previousFileRolls.shift();
+      let roll = this.rollRandom(this.realFiles.length, this.previousFileRolls);
+      this.previousFileRolls.push(roll);
+      this.activeFileIndex = roll;
+      this.reconstruct(true);
+    },
     shuffleSegment() {},
     rollRandom(max, excludes = []) {
       let roll = this.randomNum(0, max);
-      return excludes.includes(roll) ? rollRandom(max, excludes) : roll;
+      return excludes.includes(roll) ? this.rollRandom(max, excludes) : roll;
     },
     playSegmentChunk(value) {
       let target = this.segments[value][this.realDirection];
