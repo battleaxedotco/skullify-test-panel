@@ -8,16 +8,18 @@
           <div class="anim-wrapper">
             <Anno>Folder prop:</Anno>
             <skullify
-              debug
               ref="shuffle1"
               folder="./src/assets/wrenches"
-              @loop-complete="logLoop"
               :options="{
                 autoplay: true,
-                loop: true,
               }"
             />
-            <Button block label="Roll index" @click="shuffle(1)" />
+            <Button
+              block
+              v-if="isMounted"
+              :label="getCurrentLabel(1)"
+              @click="shuffle(1)"
+            />
           </div>
 
           <!-- FILE PATHS -->
@@ -36,7 +38,12 @@
                 autoplay: true,
               }"
             />
-            <Button block label="Roll index" @click="shuffle(2)" />
+            <Button
+              block
+              v-if="isMounted"
+              :label="getCurrentLabel(2)"
+              @click="shuffle(2)"
+            />
           </div>
 
           <!-- FILE DATA (LOTTIE JSON) ARRAY -->
@@ -49,7 +56,12 @@
                 autoplay: true,
               }"
             />
-            <Button block label="Roll index" @click="shuffle(3)" />
+            <Button
+              block
+              v-if="isMounted"
+              :label="getCurrentLabel(3)"
+              @click="shuffle(3)"
+            />
           </div>
 
           <!-- DIRECT LOTTIE PROP REPLACEMENT -->
@@ -62,7 +74,41 @@
                 autoplay: true,
               }"
             />
-            <Button block label="Roll index" @click="shuffleDirect" />
+            <Button
+              block
+              :label="`Roll index: ${activeIndex}`"
+              @click="shuffleDirect"
+            />
+          </div>
+
+          <!-- LOTTIE EVENTS -->
+          <div class="anim-wrapper">
+            <Anno>Events</Anno>
+            <skullify
+              ref="shuffle5"
+              folder="./src/assets/wrenches"
+              :options="{
+                autoplay: true,
+              }"
+              @loaded="logEvent"
+              @error="logEvent"
+              @loop-complete="logEvent"
+              @complete="logEvent"
+              @enter-frame="logEvent"
+              @segment-start="logEvent"
+              @config-ready="logEvent"
+              @data-ready="logEvent"
+              @data-failed="logEvent"
+              @loaded-images="logEvent"
+              @dom-loaded="logEvent"
+              @destroy="logEvent"
+            />
+            <Button
+              block
+              v-if="isMounted"
+              :label="getCurrentLabel(5)"
+              @click="shuffle(5)"
+            />
           </div>
         </Grid>
       </div>
@@ -84,7 +130,11 @@ export default {
       require("./assets/wrenches/yellow.json"),
     ],
     ballAnimation: require("../src/assets/ball.json"),
+    isMounted: false,
   }),
+  mounted() {
+    this.isMounted = true;
+  },
   components: {
     skullify,
   },
@@ -94,20 +144,32 @@ export default {
     },
   },
   methods: {
+    // The act of actually swapping components
     shuffle(num) {
       this.$refs[`shuffle${num}`].shuffleFile();
     },
-
-    // Everything below is for #4 only:
+    // For button labels only
+    getCurrentLabel(num) {
+      return this.$refs[`shuffle${num}`]
+        ? `Roll index: ${this.$refs[`shuffle${num}`].activeFileIndex}`
+        : `Roll index`;
+    },
+    // To demonstrate the events passed from Lottie
+    logEvent(evt) {
+      console.log(evt);
+    },
+    /**
+     *
+     *
+     *  Everything below is for #4 (switching animationData) only:
+     *
+     *
+     */
     shuffleDirect() {
       this.activeIndex = this.rollRandom(this.fileList.length, [
         this.activeIndex,
       ]);
       console.log(this.activeIndex);
-    },
-    logLoop(msg) {
-      console.log("LOOP");
-      console.log(msg);
     },
     randomNum(min, max) {
       return Math.floor(Math.random() * max) + min;

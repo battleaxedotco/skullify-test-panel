@@ -1,12 +1,6 @@
 import * as lottie from "lottie-web";
 
 export default {
-  mounted() {
-    if (this.debug) {
-      console.log(lottie);
-      console.log(this);
-    }
-  },
   methods: {
     play() {
       this.animData.play();
