@@ -34,7 +34,7 @@
         </Lifecycle>
         <UI>
           <Type>Panel</Type>
-          <Menu>lottie-switch</Menu>
+          <Menu>Skullify sandbox</Menu>
           <Geometry>
             <Size>
               <Height>400</Height>
